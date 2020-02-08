@@ -15,3 +15,12 @@ under construction - препроцессор (import/export modules)
 ```
 runhaskell test.hs
 ```
+
+or
+
+```
+ghc -o tau Tau.hs
+./tau
+./tau -v
+./tau your_tau_programm_file
+```

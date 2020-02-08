@@ -22,7 +22,7 @@ main = hspec $ do
 
 
     it "parse and eval identity" $ do
-      (serialise $ exec $ parse "( (a => a) U)") `shouldBe` "U"
+      (serialise $ exec $ parse "(a => a) U") `shouldBe` "U"
 
     it "parse and eval apply with FCOMP" $ do
       (serialise $ exec $ parse "( (a b => b a) R U)") `shouldBe` "(U R)"

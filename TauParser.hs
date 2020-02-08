@@ -21,37 +21,31 @@ data AST = ID String
 parse = makeAst . makeLists . splitToTokens
 
 splitToTokens src = reverse (splitToTokens' src [] [])
+    where splitToTokens' [] [] tokens = tokens
+          splitToTokens' [] id tokens = (ID_T (reverse id)):tokens
 
-splitToTokens' [] [] tokens = tokens
-splitToTokens' [] id tokens = (ID_T (reverse id)):tokens
+          splitToTokens' (x:xs) [] tokens
+              | x `elem` "\t\n\r "   = splitToTokens' xs     []     tokens
+              | x == '('             = splitToTokens' xs     []     (LEFT_BRACKET:tokens)
+              | x == ')'             = splitToTokens' xs     []     (RIGHT_BRACKET:tokens)
+              | otherwise            = splitToTokens' xs     (x:[]) tokens
 
-splitToTokens' (x:xs) [] tokens
-    | x `elem` "\t\n\r "   = splitToTokens' xs     []     tokens
-    | x == '('             = splitToTokens' xs     []     (LEFT_BRACKET:tokens)
-    | x == ')'             = splitToTokens' xs     []     (RIGHT_BRACKET:tokens)
-    | otherwise            = splitToTokens' xs     (x:[]) tokens
-
-splitToTokens' (x:xs) id tokens
-    | x `elem` "\t\n\r ()" = splitToTokens' (x:xs) []     ((ID_T (reverse id)):tokens)
-    | otherwise            = splitToTokens'  xs    (x:id) tokens
+          splitToTokens' (x:xs) id tokens
+              | x `elem` "\t\n\r ()" = splitToTokens' (x:xs) []     ((ID_T (reverse id)):tokens)
+              | otherwise            = splitToTokens'  xs    (x:id) tokens
 
 
-makeLists tokens = head (makeLists' tokens [])
+makeLists tokens = makeLists' tokens (List []) []
+    where makeLists' [] (List list) [] = List (reverse list)
+          makeLists' (x:xs) localFrame@(List tokens) stack
+              | x == LEFT_BRACKET  = makeLists' xs (List []) (localFrame:stack)
+              | x == RIGHT_BRACKET = levelUp xs (closeScope localFrame stack)
+              | otherwise          = makeLists' xs (List (x:tokens)) stack
+              where levelUp src (localFrame:stack) = makeLists' src localFrame stack
+                    closeScope localFrame [] = [(reverseFrame localFrame)]
+                    closeScope localFrame ((List frame):ls) = (List ((reverseFrame localFrame):frame)):ls
 
-makeLists' [] stack = stack
-
-makeLists' (x:xs) []
-    | x == LEFT_BRACKET  = makeLists' xs [(List [])]
-
-makeLists' (x:xs) stack@((List localFrame):ls)
-    | x == LEFT_BRACKET  = makeLists' xs ((List []):stack)
-    | x == RIGHT_BRACKET = makeLists' xs (closeScope ls (List (reverse localFrame)))
-    | otherwise          = makeLists' xs ((List (x:localFrame)):ls)
-
-closeScope [] (List (l:[])) = [l]
-closeScope [] list@(List (l:ls)) = [list]
-closeScope ((List localFrame):xs) (List (l:[])) = ((List (l:localFrame)):xs)
-closeScope ((List localFrame):xs) list@(List (l:ls)) = ((List (list:localFrame)):xs)
+reverseFrame (List localFrame) = List (reverse localFrame)
 
 getIdName (ID_T name) = name
 makeArgs tokens = ARGS (map getIdName tokens)
