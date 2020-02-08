@@ -4,7 +4,7 @@ import Control.Exception (evaluate)
 
 import TauParser
 import TauExec
-import TauSerialiser
+import TauSerializer
 
 main :: IO ()
 main = hspec $ do
@@ -22,10 +22,10 @@ main = hspec $ do
 
 
     it "parse and eval identity" $ do
-      (serialise $ exec $ parse "(a => a) U") `shouldBe` "U"
+      (serialize $ exec $ parse "(a => a) U") `shouldBe` "U"
 
     it "parse and eval apply with FCOMP" $ do
-      (serialise $ exec $ parse "( (a b => b a) R U)") `shouldBe` "(U R)"
+      (serialize $ exec $ parse "( (a b => b a) R U)") `shouldBe` "(U R)"
 
     it "parse and eval partial apply with FCOMP 2/2 params" $ do
       (exec $ parse "( (a b => b a) _ Rx)") `shouldBe` FCOMP (ARGS ["a"]) (APPLY (FCOMP (ARGS ["a","b"]) (APPLY (ID "b") [ID "a"])) [ID "a",ID "Rx"])
@@ -37,7 +37,7 @@ main = hspec $ do
       evaluate (exec $ parse "( (a b => b a) u Rx e)") `shouldThrow` anyException
 
     it "parse and eval partial apply FCOMP/FDEF" $ do
-      (serialise $ exec $ parse "\
+      (serialize $ exec $ parse "\
 \      (\
 \           (sum a b => sum sum a b)\
 \           Rx\
@@ -47,7 +47,7 @@ main = hspec $ do
 
 
     it "parse and eval partial apply FCOMP/FDEF with match arg" $ do
-      (serialise $ exec $ parse "\
+      (serialize $ exec $ parse "\
 \      (\
 \           (sum a b => sum a b)\
 \           (a b => match a\
@@ -59,7 +59,7 @@ main = hspec $ do
 \       )") `shouldBe` "(a => ((sum a b => (sum a b)) (a b => match a | O  => b | S a' => (Rx a b)) a O))"
 
     it "parse and eval (sum 2 1)" $ do
-      (serialise $ exec $ parse "\
+      (serialize $ exec $ parse "\
 \      (\
 \           (sum a b => sum sum a b)\
 \           (sum a b =>\
@@ -72,7 +72,7 @@ main = hspec $ do
 \       )") `shouldBe` "(S (S (S O)))"
 
     it "parse and eval (sum 2 1) with partial apply" $ do
-      (serialise $ exec $ parse "\
+      (serialize $ exec $ parse "\
 \      ((\
 \           (sum a b => sum sum a b)\
 \           (sum a b =>\
@@ -86,7 +86,7 @@ main = hspec $ do
 \       )") `shouldBe` "(S (S (S O)))"
 
     it "parse and eval quick sort" $ do
-      (serialise $ exec $ parse "\
+      (serialize $ exec $ parse "\
 \    (\
 \    ( list =>\
 \        (sort join filter lt ge list => sort sort join filter lt ge list)\

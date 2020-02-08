@@ -3,11 +3,11 @@ import System.Exit
 
 import qualified TauParser as Parser(parse)
 import TauExec
-import TauSerialiser
+import TauSerializer
 
 main = getArgs >>= parse >>= putStr . tau
 
-tau  = (++ "\n") . serialise . exec . Parser.parse
+tau  = (++ "\n") . serialize . exec . Parser.parse
 
 parse []     = usage   >> exit
 parse ["-v"] = version >> exit
