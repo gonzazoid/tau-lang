@@ -45,6 +45,29 @@ main = hspec $ do
 \           (S O)\
 \       )") `shouldBe` "(a => ((sum a b => (sum sum a b)) Rx a (S O)))"
 
+    it "parse and eval polimorphic match on primitive CGT" $ do
+      (serialize $ exec $ parse "( a => (\
+\                       (double a => double double a)\
+\                       (double a => match a\
+\                           | _ => _ _\
+\                       )\
+\                       a\
+\                       )\
+\    ) R") `shouldBe` "(R R)"
+
+
+    it "parse and eval polimorphic match on complex CGT" $ do
+      (serialize $ exec $ parse "( a => (\
+\                       (double a => double double a)\
+\                       (double a => match a\
+\                           | O => O\
+\                           | _ a' => ( _ ( _ (double double a')))\
+\                       )\
+\                       a\
+\                       )\
+\    ) (R (R O))") `shouldBe` "(R (R (R (R O))))"
+
+
 
     it "parse and eval partial apply FCOMP/FDEF with match arg" $ do
       (serialize $ exec $ parse "\

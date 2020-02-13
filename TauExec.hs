@@ -33,7 +33,7 @@ run func params
                     matchValue = resolve scope (ID id)
                     getClause (ID name)                clauses = getClause' name clauses 0
                     getClause (APPLY (ID name) params) clauses = getClause' name clauses (length params)
-                    resolveClause (ID _) (CLAUSE _ _ body)     = resolve scope body
+                    resolveClause cgt@(ID _) (CLAUSE (MATCH match) _ body)     = resolve (extendScope scope match [] [] cgt) body
                     resolveClause (APPLY cgt matchValues) (CLAUSE (MATCH match) (ARGS matchNames) body) = resolve (extendScope scope match matchNames matchValues cgt) body
           reducedArgs = filter ((\scope key -> Map.notMember key scope) scope) keys
           reducedFunc = APPLY func resolvedParams
