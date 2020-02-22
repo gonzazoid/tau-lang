@@ -1,5 +1,5 @@
 module TauExec(
-exec
+exec, resolve, makeScope
 ) where
 
 import Debug.Trace

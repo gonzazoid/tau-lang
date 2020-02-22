@@ -2,7 +2,7 @@ module TauParser(
   ARGS(..), MATCH(..), CLAUSE(..), AST(..), parse
 ) where
 
-import Data.List 
+import Data.List
 
 data Token = ID_T String
     | LEFT_BRACKET

@@ -1,0 +1,32 @@
+(export lt as (
+    (lt lt' a b => lt lt lt' a b)
+    ( lt lt' a b =>
+        match b
+        | O => false
+        | S b' => lt' lt' lt a b'
+    )
+    (lt' lt a b' =>
+        match a
+        | O => true
+        | S a' => lt lt lt' a' b'
+    )
+))
+
+(export ge as (
+    (ge ge' isZero a b => ge ge ge' isZero a b)
+    ( ge ge' isZero a b =>
+        match a
+        | O => isZero b
+        | S a' => ge' ge' ge isZero a' b
+    )
+    (ge' ge isZero a' b =>
+        match b
+        | O => true
+        | S b' => ge ge ge' isZero a' b'
+    )
+    (x =>
+        match x
+        | O => true
+        | S x' => false
+    )
+))
