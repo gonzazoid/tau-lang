@@ -3,6 +3,7 @@ getModule
 ) where
 
 import System.Environment
+import System.FilePath.Posix
 import System.Exit
 
 import Data.List
@@ -13,7 +14,10 @@ import TauExec
 import TauSerializer
 
 
-getModule name = (readFile name) >>= (\content -> process $ parse content)
+getModule name = (readFile (getPath name)) >>= (\content -> process $ parse content)
+    where getPath name = (map repl name) ++ ".tau"
+            where repl '.' = pathSeparator
+                  repl c = c
 
 getModules names = sequence $ map getModule names
 

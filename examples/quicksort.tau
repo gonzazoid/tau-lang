@@ -1,4 +1,4 @@
-(import (lt ge) from nat.tau)
+(import (lt ge) from core.nat)
 
     ( lt ge list =>
         (sort join filter lt ge list => sort sort join filter lt ge list)
