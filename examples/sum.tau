@@ -1,0 +1,3 @@
+(import sum from core.nat)
+
+sum (S (S (S O))) (S O)

@@ -22,25 +22,31 @@ getModule name = (readFile (getPath name)) >>= (\content -> process $ parse cont
 getModules names = sequence $ map getModule names
 
 process ast = do
-    let (imports, exports) = getSymbols ast
+    let (imports, exports, orderedExports) = getSymbols ast
     importsAst <- getModules (getNames imports)
-    return (resolveExports exports (makeGlobalScope (zip (getKeys imports) importsAst)))
+    return (resolveExports exports orderedExports (makeGlobalScope (zip (getKeys imports) importsAst)))
 
 makeGlobalScope list = foldl extendScope Map.empty list
 
 extendScope scope (keys, importsAst) = foldl (extendScope' importsAst) scope keys
-extendScope' moduleAst scope (name, alias) = case Map.lookup name moduleAst of Just x -> Map.insert alias x scope
-                                                                               Nothing -> scope -- we have to die here
+    where extendScope' moduleAst scope (name, alias) = extendScope'' (Map.lookup name moduleAst) alias scope
+            where extendScope'' (Just x) alias scope = Map.insert alias x scope
 
-resolveExports exports scope = Map.map (resolveExport scope) exports
-    where resolveExport scope (APPLY func args) = APPLY (resolve scope func) (map (resolve scope) args)
-          resolveExport scope export = resolve scope export
+resolveExports  exports orderedExports scope = snd (resolveExports' exports orderedExports scope)
+resolveExports' exports orderedExports scope = foldl resolveExport (scope, exports) orderedExports
+    where resolveExport (imports, exports) key = resolveExport' key (Map.lookup key exports) (imports, exports)
+              where  resolveExport' key (Just (APPLY func args)) (imports, exports) = ((Map.insert key resolvedApply imports), (Map.insert key resolvedApply exports))
+                         where resolvedApply = APPLY (resolve imports func) (map (resolve imports) args)
+                     resolveExport' key (Just val) (imports, exports) = ((Map.insert key resolvedVal imports), (Map.insert key resolvedVal exports))
+                         where resolvedVal = resolve imports val
 
 getNames imports = map (\(name, _) -> name) imports
 getKeys  imports = map (\(_, keys) -> keys) imports
 
-getSymbols (APPLY func args) = process' (func:args) ([], Map.empty)
-getSymbols ast = ([], Map.fromList [("main", ast)])
+getSymbols ast = reverseExportList (getSymbols' ast)
+    where reverseExportList (imports, exports, orderedExports) = (imports, exports, reverse orderedExports)
+          getSymbols' (APPLY func args) = process' (func:args) ([], Map.empty, [])
+          getSymbols' ast = ([], Map.fromList [("main", ast)], ["main"])
 
 process' [] scope = scope
 process' ((ID "export"):rest) scope = processExport rest [] scope
@@ -56,7 +62,7 @@ process' (x:xs) scope
 
         getBody (APPLY _ args) = args
 
-processExport ((ID name):(ID "as"):body) rest (imports, exports) = process' rest (imports, (Map.insert name (transform body) exports))
+processExport ((ID name):(ID "as"):body) rest (imports, exports, orderedExports) = process' rest (imports, (Map.insert name (transform body) exports), (name:orderedExports))
     where transform (x:[]) = x
           transform (func:body) = APPLY func body
 
@@ -73,6 +79,6 @@ processImport ((APPLY func args):(ID "from"):(ID path):[])              rest sco
             where getImportSymbol (ID name) = (name, name)
                   getImportSymbol (APPLY (ID name) [(ID "as"), (ID alias)]) = (name, alias)
 
-processImport' symbols path rest (imports, exports) = process' rest ((path, symbols):imports, exports)
+processImport' symbols path rest (imports, exports, orderedExports) = process' rest ((path, symbols):imports, exports, orderedExports)
 
-processMain (func:args) (imports, exports) = (imports, (Map.insert "main" (APPLY func args) exports))
+processMain (func:args) (imports, exports, orderedExports) = (imports, (Map.insert "main" (APPLY func args) exports), ("main":orderedExports))

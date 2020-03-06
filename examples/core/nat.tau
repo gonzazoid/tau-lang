@@ -1,3 +1,21 @@
+(export nat as
+      (nat => nat nat)
+      (nat a => match a
+        | O => O
+        | S a' => (S (nat nat a'))
+      )
+)
+
+(export sum as
+  (sum nat => sum sum nat)
+    (sum nat a b =>
+        match a
+        | O => nat b
+        | S a' => S (sum sum nat a' b)
+    )
+    nat
+)
+
 (export lt as (
     (lt lt' a b => lt lt lt' a b)
     (lt lt' a b =>
