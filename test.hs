@@ -76,6 +76,23 @@ main = hspec $ do
 \           ) (S O)\
 \       )")  `shouldThrow` patternMatch
 
+    it "parse and eval apply (FDEF) with same params names in different clauses" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\               | R a' => O\
+\           ) (S O)\
+\       )")  `shouldBe` "O"
+
+    it "parse and eval apply (FDEF) with duplicate param in destructing" $ do
+      evaluate (exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a => O\
+\           ) (S O)\
+\       )")  `shouldThrow` patternMatch
+
 -- end of match
 
     it "parse and eval partial apply FCOMP/FDEF" $ do

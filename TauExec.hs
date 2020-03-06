@@ -55,6 +55,8 @@ getClause' name clauses arity = filterClausesByName name $ filterClausesByArity 
 extendScope scope match keys values cgt
     | match == "_"  = Map.union (Map.fromList [("_", cgt)]) extendedScope
     | otherwise     = extendedScope
-    where extendedScope = Map.union (makeScope keys values) scope
+    where extendedScope
+            | (Map.intersection extension scope) ==  Map.empty = Map.union extension scope
+                where extension = makeScope keys values
 
 makeScope keys params = Map.fromList $ filter (\(key, val) -> key /= "_" && val /= ID "_" ) (zip keys params)
