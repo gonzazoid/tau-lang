@@ -21,12 +21,12 @@ or
 ghc -o tau Tau.hs
 ./tau
 ./tau -v
-./tau your_tau_programm_file
+./tau your_tau_programm_file_without_extension
 ```
 
 or
 
 ```
 cd examples
-../tau quicksort.tau
+../tau quicksort
 ```
