@@ -7,7 +7,7 @@
 - partial function application
 - modules (import/export)
 
-Полное описание языка у меня [в бложике](http://gonzazoid.com/)
+Полное описание языка у меня [в бложике](https://gonzazoid.com/)
 
 ## play around
 
