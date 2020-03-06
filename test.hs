@@ -12,15 +12,6 @@ patternMatch (PatternMatchFail _) = True
 main :: IO ()
 main = hspec $ do
   describe "Prelude.head" $ do
-{-    it "returns the first element of a list" $ do
-      head [23 ..] `shouldBe` (23 :: Int)
-
-    it "returns the first element of an *arbitrary* list" $
-      property $ \x xs -> head (x:xs) == (x :: Int)
-
-    it "throws an exception if used with an empty list" $ do
-      evaluate (head []) `shouldThrow` anyException
--}
 
     it "parse and eval identity" $ do
       (serialize $ exec $ parse "(a => a) U") `shouldBe` "U"
@@ -94,6 +85,47 @@ main = hspec $ do
 \       )")  `shouldThrow` patternMatch
 
 -- end of match
+
+-- polymorphic match
+
+    it "parse and eval apply (FDEF) with polymorphic match" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\               | _ a' => _\
+\           ) (R O)\
+\       )")  `shouldBe` "R"
+
+    it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\               | _ _ => _\
+\           ) (R O)\
+\       )")  `shouldBe` "R"
+
+    it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => _\
+\           ) (S O)\
+\       )")  `shouldBe` "_"
+
+{-
+    it "parse and eval apply (FDEF) with polymorphic match and post resolve" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (scipper a => match a\
+\               | S a' => O\
+\               | _ a' => scipper a'\
+\           ) (a => _ a) (R O)\
+\       )")  `shouldBe` "R"
+-}
+-- end of polymorphic match
+
 
     it "parse and eval partial apply FCOMP/FDEF" $ do
       (serialize $ exec $ parse "\
