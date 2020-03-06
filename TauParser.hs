@@ -37,6 +37,7 @@ splitToTokens src = reverse (splitToTokens' src [] [])
 
 makeLists tokens = makeLists' tokens (List []) []
     where makeLists' [] (List list) [] = List (reverse list)
+          makeLists' [] (List list) [(List [])] = List list
           makeLists' (x:xs) localFrame@(List tokens) stack
               | x == LEFT_BRACKET  = makeLists' xs (List []) (localFrame:stack)
               | x == RIGHT_BRACKET = levelUp xs (closeScope localFrame stack)

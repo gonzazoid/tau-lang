@@ -1,45 +1,21 @@
 (import (lt ge) from core.nat)
+(import (filter join) from core.lists)
 
-    ( lt ge list =>
+    ( lt ge filter join list =>
         (sort join filter lt ge list => sort sort join filter lt ge list)
         (sort join filter lt ge list =>
             match list
-            | EMPTY => EMPTY
+            | [] => []
             | L head tail => join (sort sort join filter lt ge (filter tail (lt _ head))) (L head (sort sort join filter lt ge (filter tail ( ge _ head))))
         )
-        (list1 list2 =>
-            (join list1 list2 => join join list1 list2)
-            ( join list1 list2 =>
-                match list1
-                | EMPTY => list2
-                | L head tail => L head (join join tail list2)
-            )
-            list1
-            list2
-        )
-        (list predicate =>
-            ( filter filter' predicate list =>
-                match list
-                | EMPTY => EMPTY
-                | L head tail => filter' ( filter filter filter' predicate tail ) head (predicate head) 
-            )
-            ( filter filter' predicate list =>
-                match list
-                | EMPTY => EMPTY
-                | L head tail => filter' ( filter filter filter' predicate tail ) head (predicate head) 
-            )
-            ( list elem flag =>
-                match flag
-                | true => L elem list
-                | false => list
-            )
-            predicate
-            list
-        )
+        join
+        filter
         lt
         ge
         list
     )
     lt
     ge
-    (L (S(S(S(O)))) (L (S(S(S(S(S(O)))))) (L (S(S(S(S(O))))) (L (S O) EMPTY))))
+    filter
+    join
+    (L (S(S(S(O)))) (L (S(S(S(S(S(O)))))) (L (S(S(S(S(O))))) (L (S O) []))))

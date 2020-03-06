@@ -1,10 +1,13 @@
 import Test.Hspec
 import Test.QuickCheck
 import Control.Exception (evaluate)
+import Control.Exception.Base
 
 import TauParser
 import TauExec
 import TauSerializer
+
+patternMatch (PatternMatchFail _) = True
 
 main :: IO ()
 main = hspec $ do
@@ -18,8 +21,6 @@ main = hspec $ do
     it "throws an exception if used with an empty list" $ do
       evaluate (head []) `shouldThrow` anyException
 -}
-
-
 
     it "parse and eval identity" $ do
       (serialize $ exec $ parse "(a => a) U") `shouldBe` "U"
@@ -35,6 +36,47 @@ main = hspec $ do
 
     it "parse and eval apply with more args then expected" $ do
       evaluate (exec $ parse "( (a b => b a) u Rx e)") `shouldThrow` anyException
+
+    it "parse and eval apply (FCOMP) with duplicates in args" $ do
+      evaluate (exec $ parse "(a a => a a) a a") `shouldThrow` patternMatch
+
+    it "parse and eval apply (FDEF) with duplicates in args" $ do
+      evaluate (exec $ parse "(a a => match a | O => O) O O") `shouldThrow` patternMatch
+
+    it "parse and eval apply (FDEF) with defined match parameter" $ do
+      (serialize $ exec $ parse "(a => match a | O => O) O") `shouldBe` "O"
+
+    it "parse and eval apply (FDEF) with undefined match parameter" $ do
+      evaluate (exec $ parse "(a => match b | O => O) O") `shouldThrow` patternMatch
+
+-- match
+    it "parse and eval apply (FDEF) with proper clause" $ do
+      (serialize $ exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\           ) (S O)\
+\       )")  `shouldBe` "O"
+
+    it "parse and eval apply (FDEF) without proper clause" $ do
+      evaluate (exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\               | S b' => E\
+\           ) (R O)\
+\       )")  `shouldThrow` patternMatch
+
+    it "parse and eval apply (FDEF) with 2 same clauses" $ do
+      evaluate (exec $ parse "\
+\      (\
+\           (a => match a\
+\               | S a' => O\
+\               | S b' => E\
+\           ) (S O)\
+\       )")  `shouldThrow` patternMatch
+
+-- end of match
 
     it "parse and eval partial apply FCOMP/FDEF" $ do
       (serialize $ exec $ parse "\

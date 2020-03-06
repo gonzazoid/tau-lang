@@ -1,0 +1,25 @@
+(import eq as bitEq from core.bits)
+(import and from core.bools)
+
+(export eq as (
+    (bitEq and byte1 byte2 =>
+        match byte1
+        | BYTE x7 x6 x5 x4 x3 x2 x1 x0 => (and (bitEq x7 (get7 byte2))
+                                               (and (bitEq x6 (get6 byte2))
+                                                    (and (bitEq x5 (get5 byte2))
+                                                         (and (bitEq x4 (get4 byte2))
+                                                              (and (bitEq x3 (get3 byte2))
+                                                                   (and (bitEq x2 (get2 byte2))
+                                                                        (and (bitEq x1 (get1 byte2))
+                                                                             (bitEq x0 (get0 byte2))
+                                                                        )
+                                                                   )
+                                                              )
+                                                         )
+                                                    )
+                                               )
+                                          )
+    )
+    bitEq
+    and
+))

@@ -1,0 +1,35 @@
+(export lookup as (
+
+    (eq => 
+        (lookup lookup' lookup'' => lookup lookup lookup' lookup'')
+        (lookup lookup' lookup'' name map =>
+            match map
+            | [] => Nothing
+            | L pair xs => lookup' lookup lookup' lookup'' name pair xs
+        )
+        ((lookup lookup' lookup'' name pair xs =>
+            match pair
+            | Pair key value => lookup'' lookup lookup' lookup'' (eq key name ) value xs
+        ) eq)
+        (lookup lookup' lookup'' isEqual value xs
+            match isEqual
+            | true => Just value
+            | false => lookup lookup lookup' lookup'' name xs
+        )
+    )
+))
+
+(export member as (
+    (lookup eq =>
+        lookup eq check name map => check ((lookup eq) name map)
+        lookup
+        eq
+        (value => match value
+                  | Nothing => false
+                  | Just _ => true
+        )
+    )
+    lookup
+))
+
+export updateOrInsert as

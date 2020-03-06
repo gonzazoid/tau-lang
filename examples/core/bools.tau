@@ -1,0 +1,12 @@
+(export and as (
+    (bool a b =>
+        match a
+        | false => false
+        | true => bool b
+    )
+    (a =>
+        match a
+        | true => true
+        | false => false
+    )
+))

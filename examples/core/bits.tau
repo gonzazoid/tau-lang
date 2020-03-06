@@ -1,0 +1,17 @@
+(export eq as (
+    (isZero isOne bit1 bit2 =>
+        match bit1
+        | 0 => isZero bit2
+        | 1 => isOne bit2
+    )
+    (bit =>
+        match bit
+        | 0 => true
+        | 1 => false
+    )
+    (bit =>
+        match bit
+        | 0 => false
+        | 1 => true
+    )
+))

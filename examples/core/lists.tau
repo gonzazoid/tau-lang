@@ -1,0 +1,69 @@
+(import and from core.bools)
+
+(export map as
+    (map => map map)
+    (map func list =>
+        match list
+        | [] => []
+        | L val xs => L (func val) (map map func xs)
+    )
+)
+
+(export filter as
+    (filter filter' => filter filter filter')
+    (filter filter' list predicate =>
+        match list
+        | [] => []
+        | L head tail => filter' (predicate head) head (filter filter filter' tail predicate)
+    )
+    (flag elem list =>
+        match flag
+        | true => L elem list
+        | false => list
+    )
+)
+
+(export join as
+    (join => join join)
+    (join list1 list2 =>
+        match list1
+        | [] => list2
+        | L head tail => L head (join join tail list2)
+    )
+)
+
+(export zip as
+    (zip zip' => zip zip zip')
+    (zip zip' list1 list2 =>
+        match list1
+        | [] => []
+        | L head tail => zip' zip zip' head tail list2
+    )
+    (zip zip' head tail list2 =>
+        match list2
+        | [] => []
+        | L head' tail' => L (Pair head head') (zip zip zip' tail tail')
+    )
+)
+
+(export eq as
+    (and eq => 
+        (eqList eqList' => eqList eqList')
+        ((isEmpty list1 list2 =>
+            match list1
+            | [] => isEmpty list2
+            | L head tail => eqList' eqList eqList' head tail list2
+        )
+        (list =>
+            match list
+            | [] => true
+            | L _ _ => false
+        ))
+
+        ((and eq eqList eqList' head tail list2 =>
+            match list2
+            | [] => false
+            | L head' tail' => and (eq head head') (eqList tail tail')
+        ) and eq)
+    ) and
+)

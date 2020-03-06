@@ -1,6 +1,6 @@
 (export lt as (
     (lt lt' a b => lt lt lt' a b)
-    ( lt lt' a b =>
+    (lt lt' a b =>
         match b
         | O => false
         | S b' => lt' lt' lt a b'
