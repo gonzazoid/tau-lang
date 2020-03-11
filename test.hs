@@ -3,15 +3,22 @@ import Test.QuickCheck
 import Control.Exception (evaluate)
 import Control.Exception.Base
 
+import qualified Data.Map as Map
+
+import TauPP
 import TauParser
 import TauExec
 import TauSerializer
 
 patternMatch (PatternMatchFail _) = True
 
+runMain ast = (case Map.lookup "main" ast of Just x -> serialize $ exec x
+                                             Nothing -> "")
+
+
 main :: IO ()
 main = hspec $ do
-  describe "Prelude.head" $ do
+  describe "Parse&eval" $ do
 
     it "parse and eval identity" $ do
       (serialize $ exec $ parse "(a => a) U") `shouldBe` "U"
@@ -40,79 +47,101 @@ main = hspec $ do
     it "parse and eval apply (FDEF) with undefined match parameter" $ do
       evaluate (exec $ parse "(a => match b | O => O) O") `shouldThrow` patternMatch
 
--- match
-    it "parse and eval apply (FDEF) with proper clause" $ do
-      (serialize $ exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\           ) (S O)\
-\       )")  `shouldBe` "O"
+    describe "match" $ do
 
-    it "parse and eval apply (FDEF) without proper clause" $ do
-      evaluate (exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\               | S b' => E\
-\           ) (R O)\
-\       )")  `shouldThrow` patternMatch
+        it "parse and eval apply (FDEF) with proper clause" $ do
+          (serialize $ exec $ parse "\
+\         (\
+\              (a => match a\
+\                  | S a' => O\
+\              ) (S O)\
+\         )")  `shouldBe` "O"
 
-    it "parse and eval apply (FDEF) with 2 same clauses" $ do
-      evaluate (exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\               | S b' => E\
-\           ) (S O)\
-\       )")  `shouldThrow` patternMatch
+        it "parse and eval apply (FDEF) without proper clause" $ do
+            evaluate (exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => O\
+\                   | S b' => E\
+\               ) (R O)\
+\           )")  `shouldThrow` patternMatch
 
-    it "parse and eval apply (FDEF) with same params names in different clauses" $ do
-      (serialize $ exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\               | R a' => O\
-\           ) (S O)\
-\       )")  `shouldBe` "O"
+        it "parse and eval apply (FDEF) with 2 same clauses" $ do
+            evaluate (exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => O\
+\                   | S b' => E\
+\               ) (S O)\
+\           )")  `shouldThrow` patternMatch
 
-    it "parse and eval apply (FDEF) with duplicate param in destructing" $ do
-      evaluate (exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a => O\
-\           ) (S O)\
-\       )")  `shouldThrow` patternMatch
+        it "parse and eval apply (FDEF) with same params names in different clauses" $ do
+            (serialize $ exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => O\
+\                   | R a' => O\
+\               ) (S O)\
+\           )")  `shouldBe` "O"
+
+        it "parse and eval apply (FDEF) with duplicate param in destructing" $ do
+            evaluate (exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a => O\
+\               ) (S O)\
+\           )")  `shouldThrow` patternMatch
 
 -- end of match
 
--- polymorphic match
+    describe "polymorphic match" $ do
+        it "parse and eval apply (FDEF) with polymorphic match" $ do
+            (serialize $ exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => O\
+\                   | _ a' => _\
+\               ) (R O)\
+\           )")  `shouldBe` "R"
 
-    it "parse and eval apply (FDEF) with polymorphic match" $ do
-      (serialize $ exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\               | _ a' => _\
-\           ) (R O)\
-\       )")  `shouldBe` "R"
+        it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
+            (serialize $ exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => O\
+\                   | _ _ => _\
+\               ) (R O)\
+\           )")  `shouldBe` "R"
 
-    it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
-      (serialize $ exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => O\
-\               | _ _ => _\
-\           ) (R O)\
-\       )")  `shouldBe` "R"
+        it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
+            (serialize $ exec $ parse "\
+\           (\
+\               (a => match a\
+\                   | S a' => _\
+\               ) (S O)\
+\           )")  `shouldBe` "_"
 
-    it "parse and eval apply (FDEF) with polymorphic match and scip parameter in destructing" $ do
-      (serialize $ exec $ parse "\
-\      (\
-\           (a => match a\
-\               | S a' => _\
-\           ) (S O)\
-\       )")  `shouldBe` "_"
+        it "parse and eval polimorphic match on primitive CGT" $ do
+            (serialize $ exec $ parse "( a => (\
+\                       (double a => double double a)\
+\                       (double a => match a\
+\                           | _ => _ _\
+\                       )\
+\                       a\
+\                       )\
+\    ) R") `shouldBe` "(R R)"
+
+
+        it "parse and eval polimorphic match on complex CGT" $ do
+            (serialize $ exec $ parse "( a => (\
+\                       (double a => double double a)\
+\                       (double a => match a\
+\                           | O => O\
+\                           | _ a' => ( _ ( _ (double double a')))\
+\                       )\
+\                       a\
+\                       )\
+\    ) (R (R O))") `shouldBe` "(R (R (R (R O))))"
 
 {-
     it "parse and eval apply (FDEF) with polymorphic match and post resolve" $ do
@@ -136,27 +165,7 @@ main = hspec $ do
 \           (S O)\
 \       )") `shouldBe` "(a => ((sum a b => (sum sum a b)) Rx a (S O)))"
 
-    it "parse and eval polimorphic match on primitive CGT" $ do
-      (serialize $ exec $ parse "( a => (\
-\                       (double a => double double a)\
-\                       (double a => match a\
-\                           | _ => _ _\
-\                       )\
-\                       a\
-\                       )\
-\    ) R") `shouldBe` "(R R)"
 
-
-    it "parse and eval polimorphic match on complex CGT" $ do
-      (serialize $ exec $ parse "( a => (\
-\                       (double a => double double a)\
-\                       (double a => match a\
-\                           | O => O\
-\                           | _ a' => ( _ ( _ (double double a')))\
-\                       )\
-\                       a\
-\                       )\
-\    ) (R (R O))") `shouldBe` "(R (R (R (R O))))"
 
 
 
@@ -199,81 +208,13 @@ main = hspec $ do
 \       (S O)\
 \       )") `shouldBe` "(S (S (S O)))"
 
-    it "parse and eval quick sort" $ do
-      (serialize $ exec $ parse "\
-\    (\
-\    ( list =>\
-\        (sort join filter lt ge list => sort sort join filter lt ge list)\
-\        (sort join filter lt ge list =>\
-\            match list\
-\            | EMPTY => EMPTY\
-\            | L head tail => join (sort sort join filter lt ge (filter tail (lt _ head))) (L head (sort sort join filter lt ge (filter tail ( ge _ head))))\
-\        )\
-\        (list1 list2 =>\
-\            (join list1 list2 => join join list1 list2)\
-\            ( join list1 list2 =>\
-\                match list1\
-\                | EMPTY => list2\
-\                | L head tail => L head (join join tail list2)\
-\            )\
-\           list1\
-\           list2\
-\       )\
-\       (list predicate =>\
-\           ( filter filter' predicate list =>\
-\               match list\
-\               | EMPTY => EMPTY\
-\               | L head tail => filter' ( filter filter filter' predicate tail ) head (predicate head)\
-\           )\
-\           ( filter filter' predicate list =>\
-\               match list\
-\               | EMPTY => EMPTY\
-\               | L head tail => filter' ( filter filter filter' predicate tail ) head (predicate head)\
-\           )\
-\           ( list elem flag =>\
-\               match flag\
-\               | true => L elem list\
-\               | false => list\
-\           )\
-\           predicate\
-\           list\
-\       )\
-\       ( a b =>\
-\           (lt lt' a b => lt lt lt' a b)\
-\           ( lt lt' a b =>\
-\               match b\
-\               | O => false\
-\               | S b' => lt' lt' lt a b'\
-\           )\
-\           (lt' lt a b' =>\
-\               match a\
-\               | O => true\
-\               | S a' => lt lt lt' a' b'\
-\           )\
-\           a\
-\           b\
-\       )\
-\       ( a b =>\
-\           (ge ge' isZero a b => ge ge ge' isZero a b)\
-\           ( ge ge' isZero a b =>\
-\               match a\
-\               | O => isZero b\
-\               | S a' => ge' ge' ge isZero a' b\
-\           )\
-\           (ge' ge isZero a' b =>\
-\               match b\
-\               | O => true\
-\               | S b' => ge ge ge' isZero a' b'\
-\           )\
-\           (x =>\
-\               match x\
-\               | O => true\
-\               | S x' => false\
-\           )\
-\           a\
-\           b\
-\       )\
-\       list\
-\   )\
-\   (L (S(S(S(O)))) (L (S(S(S(S(S(O)))))) (L (S(S(S(S(O))))) (L (S(S O)) EMPTY))))\
-\   )" ) `shouldBe` "(L (S (S O)) (L (S (S (S O))) (L (S (S (S (S O)))) (L (S (S (S (S (S O))))) EMPTY))))"
+  describe "Preprocessor" $ do
+    it "load module and run main (ID O)" $ do
+      ast <- getModule "Tests.01"
+      (runMain ast) `shouldBe` "O"
+
+  describe "etc" $ do
+
+    it "load module and run: quicksort" $ do
+      ast <- getModule "Tests.02"
+      (runMain ast) `shouldBe` "(L (S O) (L (S (S (S O))) (L (S (S (S (S O)))) (L (S (S (S (S (S O))))) []))))"

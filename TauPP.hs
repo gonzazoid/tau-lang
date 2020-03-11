@@ -44,7 +44,10 @@ getNames imports = map (\(name, _) -> name) imports
 getKeys  imports = map (\(_, keys) -> keys) imports
 
 getSymbols ast = reverseExportList (getSymbols' ast)
-    where reverseExportList (imports, exports, orderedExports) = (imports, exports, reverse orderedExports)
+    where reverseExportList (imports, exports, orderedExports)
+              | onlyUniqueIds orderedExports = (imports, exports, reverse orderedExports)
+                where onlyUniqueIds [] = True
+                      onlyUniqueIds (x:xs) = (x `notElem` xs) && (onlyUniqueIds xs)
           getSymbols' (APPLY func args) = process' (func:args) ([], Map.empty, [])
           getSymbols' ast = ([], Map.fromList [("main", ast)], ["main"])
 

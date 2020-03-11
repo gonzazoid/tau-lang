@@ -1,0 +1,21 @@
+(import (lt ge) from core.nat)
+(import (filter join) from core.lists)
+
+    ( lt ge filter join list =>
+        (sort join filter lt ge list => sort sort join filter lt ge list)
+        (sort join filter lt ge list =>
+            match list
+            | [] => []
+            | L head tail => join (sort sort join filter lt ge (filter tail (lt _ head))) (L head (sort sort join filter lt ge (filter tail ( ge _ head))))
+        )
+        join
+        filter
+        lt
+        ge
+        list
+    )
+    lt
+    ge
+    filter
+    join
+    (L (S(S(S(O)))) (L (S(S(S(S(S(O)))))) (L (S(S(S(S(O))))) (L (S O) []))))
