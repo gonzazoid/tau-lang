@@ -27,6 +27,5 @@ ghc -o tau Tau.hs
 or
 
 ```
-cd examples
-../tau quicksort
+./tau examples.quicksort
 ```
